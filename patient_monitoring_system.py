@@ -33,7 +33,6 @@ from dataclasses import dataclass, asdict
 # Попытка импорта cryptography для AES-GCM
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    from cryptography.hazmat.backends import default_backend
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
     CRYPTOGRAPHY_AVAILABLE = False
@@ -1218,12 +1217,12 @@ def run_full_demo_and_save_figures() -> Tuple[List[str], Dict]:
             for i, log in enumerate(suspicious_logs):
                 window_start = log.timestamp - timedelta(minutes=window_minutes)
                 recent_logs = [
-                    l for l in suspicious_logs[:i+1]
-                    if l.timestamp >= window_start
+                    log_entry for log_entry in suspicious_logs[:i + 1]
+                    if log_entry.timestamp >= window_start
                 ]
                 distinct_patients = set()
-                for l in recent_logs:
-                    distinct_patients.update(l.patient_ids_accessed)
+                for log_entry in recent_logs:
+                    distinct_patients.update(log_entry.patient_ids_accessed)
                 distinct_counts.append(len(distinct_patients))
                 times_for_plot.append(log.timestamp)
             
