@@ -1,0 +1,48 @@
+name: Simple Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install deps
+        run: pip install cryptography matplotlib
+
+      - name: Run script
+        run: python patient_monitoring_system.py
+
+      - name: Create output summary
+        run: |
+          echo "Релиз ${{ github.ref_name }}" > release_info.txt
+          echo "Дата: $(date)" >> release_info.txt
+          echo "" >> release_info.txt
+          echo "Сгенерированные файлы:" >> release_info.txt
+          
+          if [ -d "результаты" ]; then
+            ls -la результаты/ >> release_info.txt
+          else
+            echo "Папка 'результаты' не создана" >> release_info.txt
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            результаты/*.png
+            release_info.txt
+            patient_monitoring_system.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
