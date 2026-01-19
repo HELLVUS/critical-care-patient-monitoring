@@ -3,7 +3,7 @@ name: Python CI
 on: [push, pull_request]
 
 jobs:
-  lint-test:
+  release-build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
