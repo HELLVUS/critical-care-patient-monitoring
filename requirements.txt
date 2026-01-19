@@ -1,1 +1,1 @@
-pip install cryptography matplotlib
+matplotlib==3.10.0
