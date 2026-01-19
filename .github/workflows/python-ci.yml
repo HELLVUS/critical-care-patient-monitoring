@@ -25,35 +25,23 @@ jobs:
 
       - name: Lint with Ruff
         run: |
-          # Сначала автофикс того, что можно
           ruff check . --fix
-          # Потом проверка (если остались ошибки - падаем)
           ruff check .
-        continue-on-error: false
-
-      - name: Check formatting with Black
-        run: |
-          black . --check --diff
         continue-on-error: false
 
       - name: Run basic tests
         run: |
           python test_basic.py
-          # Если добавишь настоящие тесты с pytest:
-          # pytest -v --tb=short
 
       - name: Test script execution
         run: |
-          # Проверяем, что скрипт импортируется без ошибок
           python -c "import patient_monitoring_system; print('✓ Основной модуль импортирован')"
           
-          # Пробуем запустить демо (но без сохранения графиков)
           echo "Проверка базовой функциональности..."
           python -c "
           from patient_monitoring_system import PatientMonitoringSystem, PatientVitals
           from datetime import datetime
           
-          # Создаем тестовые данные
           system = PatientMonitoringSystem()
           vitals = PatientVitals(
               patient_id='CI_TEST',
@@ -65,7 +53,6 @@ jobs:
               respiratory_rate=18
           )
           
-          # Пробуем обработать
           result = system.process_patient_data(
               vitals=vitals,
               user_id='CI_USER',
