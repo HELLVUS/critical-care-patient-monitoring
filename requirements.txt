@@ -1,3 +1,5 @@
+cryptography
 matplotlib
 pytest
 ruff
+black
