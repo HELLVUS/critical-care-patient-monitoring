@@ -1,9 +1,9 @@
-name: Python CI
+name: Default CI
 
 on: [push, pull_request]
 
 jobs:
-  default-build:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

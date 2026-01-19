@@ -1,69 +1,67 @@
-name: Python CI
+name: Create Release
 
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - 'v*.*.*'
 
 jobs:
-  release-build:
+  build-release:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          cache: 'pip'
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip list
+        run: pip install cryptography matplotlib
 
-      - name: Lint with Ruff
+      - name: Run monitoring system and generate outputs
         run: |
-          ruff check . --fix
-          ruff check .
-        continue-on-error: false
+          mkdir -p результаты
+          
+          python patient_monitoring_system.py
+          
+          echo "=== ОТЧЕТ СИСТЕМЫ МОНИТОРИНГА ===" > report.txt
+          echo "Версия: ${{ github.ref_name }}" >> report.txt
+          echo "Дата: $(date)" >> report.txt
+          echo "" >> report.txt
+          
+          if [ -d "результаты" ]; then
+            echo "Сгенерированные графики:" >> report.txt
+            ls -la результаты/ >> report.txt
+          else
+            echo "Графики не сгенерированы (возможно, нет matplotlib)" >> report.txt
+          fi
 
-      - name: Run basic tests
-        run: |
-          python test_basic.py
-          # Если добавишь настоящие тесты с pytest:
-          # pytest -v --tb=short
-
-      - name: Test script execution
-        run: |
-          python -c "import patient_monitoring_system; print('✓ Основной модуль импортирован')"
-          
-          echo "Проверка базовой функциональности..."
-          python -c "
-          from patient_monitoring_system import PatientMonitoringSystem, PatientVitals
-          from datetime import datetime
-          
-          system = PatientMonitoringSystem()
-          vitals = PatientVitals(
-              patient_id='CI_TEST',
-              timestamp=datetime.now(),
-              heart_rate=80,
-              systolic_bp=120,
-              diastolic_bp=80,
-              oxygen_saturation=97.5,
-              respiratory_rate=18
-          )
-          
-          # Пробуем обработать
-          result = system.process_patient_data(
-              vitals=vitals,
-              user_id='CI_USER',
-              location='CI_LOCATION',
-              user_role='doctor',
-              assigned_patients=['CI_TEST']
-          )
-          
-          print(f'✓ Данные обработаны. Алерты: {len(result[\"integrity_alerts\"])}')
-          print('✓ Система работает в CI окружении')
-          "
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "Patient Monitoring System ${{ github.ref_name }}"
+          files: |
+            результаты/*.png
+            report.txt
+            patient_monitoring_system.py
+          body: |
+            ## Система мониторинга пациентов в реанимации с ИИ
+            
+            ### Автоматически сгенерировано из тега ${{ github.ref_name }}
+            
+            **Файлы в релизе:**
+            - `patient_monitoring_system.py` — исходный код системы
+            - PNG графики анализа данных
+            - Текстовый отчет
+            
+            **Триада безопасности CIA:**
+            1. Конфиденциальность (RBAC, UEBA, AES-GCM)
+            2. Целостность (валидация датчиков, EWMA)
+            3. Доступность (многоуровневое кеширование)
+            
+            *Запуск: `python patient_monitoring_system.py`*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
