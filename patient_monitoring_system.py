@@ -20,11 +20,8 @@ Date: 2025
 import hashlib
 import hmac
 import json
-import time
 import random
-import logging
 import os
-import sys
 from datetime import datetime, timedelta
 from collections import deque, OrderedDict
 from typing import Dict, List, Tuple, Optional
@@ -35,6 +32,8 @@ from config.integrity_config import INTEGRITY_CONFIG
 from config.rbac_roles import RBAC_ROLES
 from config.ueba_config import UEBA_CONFIG
 from config.validate_config import validate_config
+
+from logger.logger import logger
 
 
 # Попытка импорта cryptography для AES-GCM
@@ -55,16 +54,6 @@ except ImportError:
 
 # Установка детерминированного seed
 random.seed(42)
-
-# ============================================================================
-# ЛОГИРОВАНИЕ
-# ============================================================================
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 # ============================================================================
 # МОДЕЛИ ДАННЫХ
