@@ -1,7 +1,7 @@
-from cache_config import CACHE_CONFIG
-from integrity_config import INTEGRITY_CONFIG
-from rbac_roles import RBAC_ROLES
-from ueba_config import UEBA_CONFIG
+from config.cache_config import CACHE_CONFIG
+from config.integrity_config import INTEGRITY_CONFIG
+from config.rbac_roles import RBAC_ROLES
+from config.ueba_config import UEBA_CONFIG
 
 def validate_config():
     errors = []
