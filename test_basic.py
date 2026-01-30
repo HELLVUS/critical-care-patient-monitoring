@@ -7,7 +7,6 @@ import sys
 
 sys.path.append('.')
 
-
 def test_imports():
     try:
         from patient_monitoring_system import (

@@ -14,21 +14,27 @@ Medical Patient Monitoring System with AI for ICU
   I (Integrity)       - Целостность: валидация датчиков, кросс-датчиковый анализ, тренды, EWMA
   A (Availability)    - Доступность: многоуровневое кеширование с TTL и LRU
 
-Author: Васильков Алексей, Группа БСМО-12-25
 Date: 2025
 """
 
 import hashlib
 import hmac
 import json
-import time
 import random
-import logging
 import os
 from datetime import datetime, timedelta
 from collections import deque, OrderedDict
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass, asdict
+
+from config.cache_config import CACHE_CONFIG
+from config.integrity_config import INTEGRITY_CONFIG
+from config.rbac_roles import RBAC_ROLES
+from config.ueba_config import UEBA_CONFIG
+from config.validate_config import validate_config
+
+from logger.logger import logger
+
 
 # Попытка импорта cryptography для AES-GCM
 try:
@@ -48,81 +54,6 @@ except ImportError:
 
 # Установка детерминированного seed
 random.seed(42)
-
-# ============================================================================
-# КОНФИГУРАЦИЯ
-# ============================================================================
-
-# Пороги для проверки целостности (настраиваемые)
-INTEGRITY_CONFIG = {
-    'heart_rate_min': 40,
-    'heart_rate_max': 250,  # >= 250 считается ошибкой
-    'systolic_bp_max': 240,
-    'diastolic_bp_max': 160,
-    'oxygen_saturation_min': 50,
-    'oxygen_saturation_max': 100,
-    'rate_of_change_hr_threshold': 30,  # ударов в минуту за минуту
-    'rate_of_change_o2_threshold': 5,  # процентов за минуту
-    'rate_of_change_bp_threshold': 20,  # мм рт.ст. за минуту
-    'cross_sensor_n_samples': 5,  # N последовательных измерений для проверки
-    'ewma_alpha': 0.3,  # Коэффициент сглаживания для EWMA
-    'ewma_k_sigma': 2.5  # k стандартных отклонений для флага аномалии
-}
-
-# Конфигурация кеширования
-CACHE_CONFIG = {
-    'level1_max_records': 10,  # На мониторе пациента
-    'level2_max_records': 1000,  # В шлюзе отделения
-    'level2_ttl_minutes': 60,  # TTL для уровня 2
-    'level3_ttl_minutes': None  # Без TTL для центрального сервера
-}
-
-# Конфигурация RBAC
-RBAC_ROLES = {
-    'doctor': {
-        'can_access_assigned': True,
-        'can_access_ward': False,
-        'can_decrypt': True,
-        'can_manage_users': False
-    },
-    'nurse': {
-        'can_access_assigned': False,
-        'can_access_ward': True,
-        'can_decrypt': True,
-        'can_manage_users': False
-    },
-    'admin': {
-        'can_access_assigned': False,
-        'can_access_ward': False,
-        'can_decrypt': False,
-        'can_manage_users': True
-    },
-    'analyst': {
-        'can_access_assigned': False,
-        'can_access_ward': False,
-        'can_decrypt': False,
-        'can_manage_users': False
-    }
-}
-
-# Конфигурация UEBA
-UEBA_CONFIG = {
-    'max_patients_per_session': 10,
-    'max_accesses_per_hour': 50,
-    'working_hours': (6, 22),
-    'mass_access_threshold': 15,  # Разных пациентов за T минут
-    'mass_access_window_minutes': 10
-}
-
-# ============================================================================
-# ЛОГИРОВАНИЕ
-# ============================================================================
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 # ============================================================================
 # МОДЕЛИ ДАННЫХ
@@ -1275,6 +1206,11 @@ def main():
     print("   C - КОНФИДЕНЦИАЛЬНОСТЬ: RBAC, UEBA, AES-GCM шифрование, анонимизация")
     print("   I - ЦЕЛОСТНОСТЬ: валидация датчиков, кросс-датчиковый анализ, тренды, EWMA")
     print("   A - ДОСТУПНОСТЬ: многоуровневое кеширование с TTL и LRU (3 уровня)\n")
+
+    is_valid, errors = validate_config()
+    if not is_valid:
+        print("Ошибки конфигурации:", errors)
+        exit(1)
     
     # Запуск полной демонстрации
     figure_paths, summary = run_full_demo_and_save_figures()
