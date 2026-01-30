@@ -34,6 +34,7 @@ from config.cache_config import CACHE_CONFIG
 from config.integrity_config import INTEGRITY_CONFIG
 from config.rbac_roles import RBAC_ROLES
 from config.ueba_config import UEBA_CONFIG
+from config.validate_config import validate_config
 
 
 # Попытка импорта cryptography для AES-GCM
@@ -1216,6 +1217,11 @@ def main():
     print("   C - КОНФИДЕНЦИАЛЬНОСТЬ: RBAC, UEBA, AES-GCM шифрование, анонимизация")
     print("   I - ЦЕЛОСТНОСТЬ: валидация датчиков, кросс-датчиковый анализ, тренды, EWMA")
     print("   A - ДОСТУПНОСТЬ: многоуровневое кеширование с TTL и LRU (3 уровня)\n")
+
+    is_valid, errors = validate_config()
+    if not is_valid:
+        print("Ошибки конфигурации:", errors)
+        exit(1)
     
     # Запуск полной демонстрации
     figure_paths, summary = run_full_demo_and_save_figures()
